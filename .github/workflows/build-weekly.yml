@@ -31,6 +31,8 @@ env:
 jobs:
   detect:
     runs-on: ubuntu-24.04
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     permissions:
       contents: write
 
@@ -99,6 +101,8 @@ jobs:
     needs: detect
     if: needs.detect.outputs.should_build == 'true'
     runs-on: ubuntu-24.04
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     permissions:
       contents: write
 
