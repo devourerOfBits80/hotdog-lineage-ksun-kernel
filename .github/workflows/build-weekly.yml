@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   DEVICE_REPO: LineageOS/android_device_oneplus_hotdog
   KERNEL_REPO: LineageOS/android_kernel_oneplus_sm8150
   ANYKERNEL_REPO: osm0sis/AnyKernel3
