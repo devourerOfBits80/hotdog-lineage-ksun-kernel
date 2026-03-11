@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
   DEVICE_REPO: LineageOS/android_device_oneplus_hotdog
   KERNEL_REPO: LineageOS/android_kernel_oneplus_sm8150
   ANYKERNEL_REPO: osm0sis/AnyKernel3
@@ -31,8 +31,6 @@ env:
 jobs:
   detect:
     runs-on: ubuntu-24.04
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     permissions:
       contents: write
 
@@ -101,8 +99,6 @@ jobs:
     needs: detect
     if: needs.detect.outputs.should_build == 'true'
     runs-on: ubuntu-24.04
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     permissions:
       contents: write
 
