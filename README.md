@@ -1,2 +1,52 @@
 # hotdog-lineage-ksun-kernel
-Automated weekly KernelSU-Next AnyKernel3 builds for OnePlus 7T Pro (hotdog) running LineageOS
+
+Weekly AnyKernel3 build for **OnePlus 7T Pro (`hotdog`)** using the matching **LineageOS kernel branch**, with **KernelSU-Next** integrated automatically.
+
+## What it does
+
+- runs every **Friday at 12:00 UTC**, or manually via `workflow_dispatch`
+- detects the newest common `lineage-*` branch shared by:
+  - `LineageOS/android_device_oneplus_hotdog`
+  - `LineageOS/android_kernel_oneplus_sm8150`
+- resolves upstream SHAs for that branch and skips builds if nothing changed
+- extracts build metadata from the kernel tree (`build.config`, `defconfig`, clang revision, image name)
+- downloads matching AOSP clang/GCC prebuilts
+- integrates KernelSU-Next and records its version + SHA in release notes
+- builds the legacy make-based kernel (merging `vendor/oplus.config`) and packages an **AnyKernel3 ZIP**
+- uploads artifacts (ZIP + raw kernel image) and creates a **GitHub Release**
+
+## Release policy
+
+A release is created only when the upstream state changes in at least one of:
+
+- `android_device_oneplus_hotdog`
+- `android_kernel_oneplus_sm8150`
+
+Tag format:
+
+`lineage-XX.Y-<device_sha12>-<kernel_sha12>`
+
+## Release naming
+
+- title: `OnePlus 7T Pro AnyKernel3 | lineage-XX.Y | YYYY-MM-DD`
+- asset: `AnyKernel3-hotdog-lineage-XX.Y-YYYY-MM-DD.zip`
+
+## Layout
+
+- `.github/workflows/build-weekly.yml` — CI workflow
+- `scripts/detect-lineage-branch.sh` — branch detection + upstream SHA resolution
+- `scripts/detect-clang-version.sh` — clang revision from LineageOS manifest
+- `scripts/detect-ksun-version.sh` — KernelSU-Next version detection
+- `scripts/extract-build-metadata.sh` — build inputs + toolchain metadata
+- `scripts/workaround-spmi-usid.sh` — DTS SPMI_USID patching
+- `scripts/build-kernel.sh` — legacy kernel build + oplus config merge
+- `scripts/detect-built-image.sh` — built image selection
+- `scripts/retry-helper.sh` — retry wrapper used by workflow
+- `scripts/setup-lineage-toolchain.sh` — AOSP clang/GCC prebuilts
+- `scripts/prepare-anykernel.sh` — AnyKernel3 staging (dynamic image name)
+- `anykernel/anykernel.sh` — installer config for `hotdog`/`hotdogb`
+
+## Notes
+
+- This repo intentionally ships **AnyKernel3 ZIPs**, not raw `boot.img`.
+- If the kernel tree migrates to **Kleaf/Bazel**, the workflow exits with a clear error.

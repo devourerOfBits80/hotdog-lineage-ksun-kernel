@@ -1,0 +1,36 @@
+#!/sbin/sh
+properties() { 'kernel.string=KernelSU-Next for OnePlus 7T Pro (LineageOS)
+kernel.made=GitHub Actions
+kernel.compiler=Auto-detected AOSP prebuilts
+device.name1=hotdog
+device.name2=hotdogb
+do.devicecheck=1
+do.modules=0
+do.systemless=1
+do.cleanup=1
+do.cleanuponabort=0
+block=/dev/block/bootdevice/by-name/boot
+is_slot_device=1
+ramdisk_compression=auto
+patch_vbmeta_flag=auto
+'; }
+
+. tools/ak3-core.sh
+
+IMAGE_NAME="__IMAGE_NAME__"
+if [ "$IMAGE_NAME" = "__IMAGE_NAME__" ]; then
+  for candidate in Image.gz-dtb Image.gz Image.lz4-dtb Image.lz4 Image; do
+    if [ -f "$candidate" ]; then
+      IMAGE_NAME="$candidate"
+      break
+    fi
+  done
+fi
+if [ "$IMAGE_NAME" = "__IMAGE_NAME__" ]; then
+  ui_print "Kernel image not found (expected Image.gz-dtb, Image.gz, Image.lz4-dtb, Image.lz4, or Image)."
+  abort
+fi
+
+split_boot
+flash_generic "$IMAGE_NAME"
+write_boot

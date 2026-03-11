@@ -1,0 +1,257 @@
+name: Build KernelSU-Next AnyKernel3 for OnePlus 7T Pro (LineageOS)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 12 * * 5'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/build-weekly.yml'
+      - 'scripts/**'
+      - 'anykernel/**'
+      - 'README.md'
+
+concurrency:
+  group: op7tpro-lineage-weekly-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DEVICE_REPO: LineageOS/android_device_oneplus_hotdog
+  KERNEL_REPO: LineageOS/android_kernel_oneplus_sm8150
+  ANYKERNEL_REPO: osm0sis/AnyKernel3
+  KSUN_SETUP_URL: https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh
+  DEFAULT_BUILD_CONFIG: build.config.aarch64
+  DEFAULT_DEFCONFIG: vendor/sm8150-perf_defconfig
+  DEVICE_CODENAME: hotdog
+  DEVICE_ALT_CODENAME: hotdogb
+
+jobs:
+  detect:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    outputs:
+      branch: ${{ steps.detect.outputs.branch }}
+      device_sha: ${{ steps.detect.outputs.device_sha }}
+      kernel_sha: ${{ steps.detect.outputs.kernel_sha }}
+      device_short: ${{ steps.detect.outputs.device_short }}
+      kernel_short: ${{ steps.detect.outputs.kernel_short }}
+      build_date: ${{ steps.meta.outputs.build_date }}
+      release_tag: ${{ steps.meta.outputs.release_tag }}
+      release_name: ${{ steps.meta.outputs.release_name }}
+      asset_name: ${{ steps.meta.outputs.asset_name }}
+      should_build: ${{ steps.release_check.outputs.should_build }}
+
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+
+      - name: Install detection dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl git jq
+
+      - name: Detect newest common LineageOS branch and upstream SHAs
+        id: detect
+        run: |
+          scripts/detect-lineage-branch.sh "$DEVICE_REPO" "$KERNEL_REPO"
+
+      - name: Prepare release metadata
+        id: meta
+        run: |
+          BUILD_DATE="$(date -u +%F)"
+          RELEASE_TAG="${{ steps.detect.outputs.branch }}-${{ steps.detect.outputs.device_short }}-${{ steps.detect.outputs.kernel_short }}"
+          RELEASE_NAME="OnePlus 7T Pro AnyKernel3 | ${{ steps.detect.outputs.branch }} | ${BUILD_DATE}"
+          ASSET_NAME="AnyKernel3-hotdog-${{ steps.detect.outputs.branch }}-${BUILD_DATE}.zip"
+          {
+            echo "build_date=${BUILD_DATE}"
+            echo "release_tag=${RELEASE_TAG}"
+            echo "release_name=${RELEASE_NAME}"
+            echo "asset_name=${ASSET_NAME}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Skip if release for current upstream state already exists
+        id: release_check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${{ steps.meta.outputs.release_tag }}" >/dev/null 2>&1; then
+            echo "Release already exists for current upstream state. Skipping build."
+            echo "should_build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "No release found for current upstream state. Building."
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Summary
+        run: |
+          echo "Branch:       ${{ steps.detect.outputs.branch }}"
+          echo "Device SHA:   ${{ steps.detect.outputs.device_sha }}"
+          echo "Kernel SHA:   ${{ steps.detect.outputs.kernel_sha }}"
+          echo "Release tag:  ${{ steps.meta.outputs.release_tag }}"
+          echo "Should build: ${{ steps.release_check.outputs.should_build }}"
+
+  build:
+    needs: detect
+    if: needs.detect.outputs.should_build == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+
+      - name: Install host dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            bc bison build-essential ccache curl file flex git jq \
+            libelf-dev libssl-dev lld llvm pahole python3 rsync unzip xz-utils zip \
+            device-tree-compiler
+
+      - name: Clone kernel source
+        run: |
+          scripts/retry-helper.sh git clone --depth=1 --branch "${{ needs.detect.outputs.branch }}" \
+            "https://github.com/${KERNEL_REPO}.git" kernel
+
+      - name: Pin kernel repo to detected commit
+        working-directory: kernel
+        run: |
+          git fetch --depth=1 origin "${{ needs.detect.outputs.kernel_sha }}"
+          git checkout --detach "${{ needs.detect.outputs.kernel_sha }}"
+
+      - name: Extract build metadata from kernel tree
+        id: cfg
+        run: |
+          scripts/extract-build-metadata.sh kernel "${DEFAULT_BUILD_CONFIG}" "${DEFAULT_DEFCONFIG}"
+
+      - name: Detect clang revision from LineageOS manifest
+        id: manifest
+        env:
+          BRANCH: ${{ needs.detect.outputs.branch }}
+        run: |
+          scripts/detect-clang-version.sh "$BRANCH" "$GITHUB_OUTPUT"
+
+      - name: Integrate KernelSU-Next
+        id: ksun
+        working-directory: kernel
+        run: |
+          scripts/retry-helper.sh bash -c "curl -LSs \"$KSUN_SETUP_URL\" | bash -s stable"
+          KSUN_SHA="$(git -C "$PWD" rev-parse --short HEAD)"
+          echo "ksun_sha=${KSUN_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Detect KernelSU-Next version
+        id: ksun_version
+        run: |
+          scripts/detect-ksun-version.sh kernel "$GITHUB_OUTPUT"
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: ${{ runner.os }}-ccache-${{ needs.detect.outputs.branch }}-${{ steps.cfg.outputs.clang_revision }}-${{ needs.detect.outputs.kernel_sha }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-${{ needs.detect.outputs.branch }}-${{ steps.cfg.outputs.clang_revision }}-
+            ${{ runner.os }}-ccache-${{ needs.detect.outputs.branch }}-
+
+      - name: Download detected clang prebuilt
+        env:
+          CLANG_REVISION: ${{ steps.cfg.outputs.clang_revision }}
+          CLANG_REPO_REVISION: ${{ steps.manifest.outputs.clang_repo_revision }}
+        run: |
+          scripts/setup-lineage-toolchain.sh clang "$CLANG_REVISION" clang
+
+      - name: Download GNU cross toolchains
+        run: |
+          scripts/setup-lineage-toolchain.sh gcc aarch64-linux-gnu- toolchains/aarch64
+          scripts/setup-lineage-toolchain.sh gcc arm-linux-androideabi- toolchains/arm32
+
+      - name: Work around unresolved SPMI_USID in DTS
+        run: |
+          scripts/workaround-spmi-usid.sh kernel
+
+      - name: Build kernel (legacy make flow)
+        if: steps.cfg.outputs.build_mode == 'legacy'
+        env:
+          ARCH: arm64
+          SUBARCH: arm64
+        run: |
+          scripts/build-kernel.sh kernel "${{ steps.cfg.outputs.defconfig }}"
+
+      - name: Detect built kernel image
+        id: image
+        if: steps.cfg.outputs.build_mode == 'legacy'
+        run: |
+          scripts/detect-built-image.sh kernel "$GITHUB_OUTPUT"
+
+      - name: Fail clearly if kernel tree switched to Kleaf/Bazel
+        if: steps.cfg.outputs.build_mode == 'kleaf'
+        run: |
+          echo "Detected Kleaf/Bazel kernel tree. This repo currently packages legacy make-based kernels only."
+          echo "Update the workflow to call the kernel's Bazel targets before packaging AnyKernel3."
+          exit 1
+
+      - name: Validate build output
+        if: steps.cfg.outputs.build_mode == 'legacy'
+        run: |
+          test -f "kernel/${{ steps.image.outputs.image_relpath }}"
+          file "kernel/${{ steps.image.outputs.image_relpath }}"
+
+      - name: Clone AnyKernel3
+        run: |
+          scripts/retry-helper.sh git clone --depth=1 "https://github.com/${ANYKERNEL_REPO}.git" AnyKernel3
+
+      - name: Prepare AnyKernel3 package
+        env:
+          RELEASE_LABEL: "${{ needs.detect.outputs.branch }} | ${{ needs.detect.outputs.build_date }}"
+          IMAGE_PATH: "kernel/${{ steps.image.outputs.image_relpath }}"
+        run: |
+          scripts/prepare-anykernel.sh
+
+      - name: Create archive
+        run: |
+          cd AnyKernel3
+          zip -r9 "${GITHUB_WORKSPACE}/${{ needs.detect.outputs.asset_name }}" .
+
+      - name: Upload AnyKernel3 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.detect.outputs.asset_name }}
+          path: ${{ needs.detect.outputs.asset_name }}
+          if-no-files-found: error
+
+      - name: Upload raw kernel image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Image-${{ needs.detect.outputs.branch }}-${{ needs.detect.outputs.kernel_short }}
+          path: kernel/${{ steps.image.outputs.image_relpath }}
+          if-no-files-found: error
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES_FILE="$(mktemp)"
+          cat > "$NOTES_FILE" <<EOF
+          Built automatically for OnePlus 7T Pro (hotdog).
+
+          - LineageOS branch: ${{ needs.detect.outputs.branch }}
+          - Build date (UTC): ${{ needs.detect.outputs.build_date }}
+          - Device tree: ${DEVICE_REPO}@${{ needs.detect.outputs.device_sha }}
+          - Kernel tree: ${KERNEL_REPO}@${{ needs.detect.outputs.kernel_sha }}
+          - Build mode: ${{ steps.cfg.outputs.build_mode }}
+          - Build config: ${{ steps.cfg.outputs.build_config }}
+          - Defconfig: ${{ steps.cfg.outputs.defconfig }}
+          - Clang revision: ${{ steps.cfg.outputs.clang_revision }}
+          - KernelSU-Next version: ${{ steps.ksun_version.outputs.version }}
+          - KernelSU-Next: ${{ steps.ksun.outputs.ksun_sha }}
+          EOF
+          sed -i 's/^          //' "$NOTES_FILE"
+          gh release create "${{ needs.detect.outputs.release_tag }}" \
+            "${{ needs.detect.outputs.asset_name }}" \
+            --title "${{ needs.detect.outputs.release_name }}" \
+            --notes-file "$NOTES_FILE"
