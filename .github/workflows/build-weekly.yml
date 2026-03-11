@@ -140,7 +140,7 @@ jobs:
         id: ksun
         working-directory: kernel
         run: |
-          scripts/retry-helper.sh bash -c "curl -LSs \"$KSUN_SETUP_URL\" | bash -s stable"
+          "${GITHUB_WORKSPACE}/scripts/retry-helper.sh" bash -c "curl -LSs \"$KSUN_SETUP_URL\" | bash -s stable"
           KSUN_SHA="$(git -C "$PWD" rev-parse --short HEAD)"
           echo "ksun_sha=${KSUN_SHA}" >> "$GITHUB_OUTPUT"
 
