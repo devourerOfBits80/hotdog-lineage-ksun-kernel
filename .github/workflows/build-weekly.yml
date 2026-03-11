@@ -18,7 +18,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
   DEVICE_REPO: LineageOS/android_device_oneplus_hotdog
   KERNEL_REPO: LineageOS/android_kernel_oneplus_sm8150
   ANYKERNEL_REPO: osm0sis/AnyKernel3
