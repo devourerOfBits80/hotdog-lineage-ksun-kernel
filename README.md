@@ -45,7 +45,7 @@ Tag format:
 - `scripts/retry-helper.sh` — retry wrapper used by workflow
 - `scripts/setup-lineage-toolchain.sh` — AOSP clang/GCC prebuilts
 - `scripts/prepare-anykernel.sh` — AnyKernel3 staging (dynamic image name)
-- `anykernel/anykernel.sh` — installer config for `hotdog`/`hotdogb`
+- `anykernel/anykernel.sh` — AnyKernel3 installer for **hotdog** (OnePlus 7T Pro)
 
 ## Notes
 

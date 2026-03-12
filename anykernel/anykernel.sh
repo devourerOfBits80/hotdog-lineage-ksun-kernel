@@ -11,11 +11,12 @@ do.modules=0
 do.systemless=1
 do.cleanup=1
 do.cleanuponabort=0
-block=/dev/block/bootdevice/by-name/boot
+'; }
+
+block=auto
 is_slot_device=1
 ramdisk_compression=auto
 patch_vbmeta_flag=auto
-'; }
 
 . tools/ak3-core.sh
 
@@ -34,5 +35,4 @@ if [ "$IMAGE_NAME" = "__IMAGE_NAME__" ]; then
 fi
 
 split_boot
-flash_generic "$IMAGE_NAME"
-write_boot
+flash_boot
