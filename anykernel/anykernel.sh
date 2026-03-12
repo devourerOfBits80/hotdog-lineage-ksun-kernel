@@ -4,6 +4,7 @@ kernel.made=GitHub Actions
 kernel.compiler=Auto-detected AOSP prebuilts
 device.name1=hotdog
 device.name2=hotdogb
+device.name3=hotdogc
 do.devicecheck=1
 do.modules=0
 do.systemless=1
