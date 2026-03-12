@@ -8,7 +8,7 @@ Weekly AnyKernel3 build for **OnePlus 7T Pro (`hotdog`)** using the matching **L
 - detects the newest common `lineage-*` branch shared by:
   - `LineageOS/android_device_oneplus_hotdog`
   - `LineageOS/android_kernel_oneplus_sm8150`
-- resolves upstream SHAs for that branch and skips builds if nothing changed
+- resolves upstream SHAs for that branch and **skips build only if a release for the current state already exists** (same branch + device SHA + kernel SHA + KernelSU-Next tag)
 - extracts build metadata from the kernel tree (`build.config`, `defconfig`, clang revision, image name)
 - downloads matching AOSP clang/GCC prebuilts
 - integrates KernelSU-Next and records its version + SHA in release notes
@@ -17,14 +17,15 @@ Weekly AnyKernel3 build for **OnePlus 7T Pro (`hotdog`)** using the matching **L
 
 ## Release policy
 
-A release is created only when the upstream state changes in at least one of:
+A release is created only when the release tag would be new — i.e. the upstream state changed in at least one of:
 
 - `android_device_oneplus_hotdog`
 - `android_kernel_oneplus_sm8150`
+- **KernelSU-Next** (new tag in the repo)
 
 Tag format:
 
-`lineage-XX.Y-<device_sha12>-<kernel_sha12>`
+`lineage-XX.Y-<device_sha12>-<kernel_sha12>-<ksun_tag>`
 
 ## Release naming
 

@@ -59,11 +59,20 @@ jobs:
         run: |
           scripts/detect-lineage-branch.sh "$DEVICE_REPO" "$KERNEL_REPO"
 
+      - name: Get KernelSU-Next latest tag
+        id: ksun_tag
+        run: |
+          TAG="$(git ls-remote --tags "https://github.com/KernelSU-Next/KernelSU-Next.git" 2>/dev/null | sed -n 's#.*refs/tags/\(.*\)#\1#p' | grep -E '^v[0-9]' | sort -V | tail -n1 || true)"
+          if [[ -z "$TAG" ]]; then
+            TAG="unknown"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
       - name: Prepare release metadata
         id: meta
         run: |
           BUILD_DATE="$(date -u +%F)"
-          RELEASE_TAG="${{ steps.detect.outputs.branch }}-${{ steps.detect.outputs.device_short }}-${{ steps.detect.outputs.kernel_short }}"
+          RELEASE_TAG="${{ steps.detect.outputs.branch }}-${{ steps.detect.outputs.device_short }}-${{ steps.detect.outputs.kernel_short }}-${{ steps.ksun_tag.outputs.tag }}"
           RELEASE_NAME="OnePlus 7T Pro AnyKernel3 | ${{ steps.detect.outputs.branch }} | ${BUILD_DATE}"
           ASSET_NAME="AnyKernel3-hotdog-${{ steps.detect.outputs.branch }}-${BUILD_DATE}.zip"
           {
@@ -91,6 +100,7 @@ jobs:
           echo "Branch:       ${{ steps.detect.outputs.branch }}"
           echo "Device SHA:   ${{ steps.detect.outputs.device_sha }}"
           echo "Kernel SHA:   ${{ steps.detect.outputs.kernel_sha }}"
+          echo "KernelSU tag: ${{ steps.ksun_tag.outputs.tag }}"
           echo "Release tag:  ${{ steps.meta.outputs.release_tag }}"
           echo "Should build: ${{ steps.release_check.outputs.should_build }}"
 
