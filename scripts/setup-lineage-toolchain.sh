@@ -76,7 +76,6 @@ clone_clang_from_repo() {
   local search_root=""
   local candidate=""
   local base_name=""
-  local selected=""
   local -a search_roots=()
   local -a candidates=()
   local -a prefix_matches=()
@@ -142,7 +141,20 @@ clone_clang_from_repo() {
     if [[ "$(basename "$match_dir")" != "$ident" ]]; then
       echo "Using ${repo_label} clang revision: $(basename "$match_dir")"
     fi
-    cp -a "$match_dir/." "$target/"
+    if command -v rsync >/dev/null 2>&1; then
+      rsync -a \
+        --exclude='*riscv*' \
+        --exclude='*lsan*' \
+        --exclude='*tsan*' \
+        --exclude='*msan*' \
+        --exclude='*asan*' \
+        --exclude='*ubsan*' \
+        --exclude='*fuzzer*' \
+        --exclude='*profile*' \
+        "$match_dir/" "$target/"
+    else
+      cp -a "$match_dir/." "$target/"
+    fi
     return 0
   fi
   return 1
