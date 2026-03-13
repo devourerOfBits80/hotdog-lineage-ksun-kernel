@@ -63,11 +63,13 @@ if [[ -f "scripts/kconfig/merge_config.sh" && -f "arch/arm64/configs/vendor/oplu
     2>&1
 fi
 
-echo "Enabling MODVERSIONS for vendor module compatibility"
-sed -i '/CONFIG_MODVERSIONS/d; /CONFIG_MODULE_SIG_FORCE/d' out/.config
+echo "Configuring module compatibility (MODVERSIONS, disable LOCALVERSION_AUTO)"
+sed -i '/CONFIG_MODVERSIONS/d; /CONFIG_MODULE_SIG_FORCE/d; /CONFIG_MODULE_FORCE_LOAD/d; /CONFIG_LOCALVERSION_AUTO/d' out/.config
 {
   echo "CONFIG_MODVERSIONS=y"
+  echo "# CONFIG_MODULE_FORCE_LOAD is not set"
   echo "# CONFIG_MODULE_SIG_FORCE is not set"
+  echo "# CONFIG_LOCALVERSION_AUTO is not set"
 } >> out/.config
 
 if [[ -d "drivers/kernelsu" || -d "KernelSU-Next" ]]; then
