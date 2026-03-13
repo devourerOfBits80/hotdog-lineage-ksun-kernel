@@ -20,17 +20,15 @@ patch_vbmeta_flag=auto
 
 . tools/ak3-core.sh
 
-IMAGE_NAME="__IMAGE_NAME__"
-if [ "$IMAGE_NAME" = "__IMAGE_NAME__" ]; then
-  for candidate in Image.gz-dtb Image.gz Image.lz4-dtb Image.lz4 Image; do
-    if [ -f "$candidate" ]; then
-      IMAGE_NAME="$candidate"
-      break
-    fi
-  done
-fi
-if [ "$IMAGE_NAME" = "__IMAGE_NAME__" ]; then
-  ui_print "Kernel image not found (expected Image.gz-dtb, Image.gz, Image.lz4-dtb, Image.lz4, or Image)."
+IMAGE_NAME=""
+for candidate in __IMAGE_NAME__ Image.gz-dtb Image.gz Image.lz4-dtb Image.lz4 Image; do
+  if [ -f "$candidate" ]; then
+    IMAGE_NAME="$candidate"
+    break
+  fi
+done
+if [ -z "$IMAGE_NAME" ]; then
+  ui_print "Kernel image not found."
   abort
 fi
 
