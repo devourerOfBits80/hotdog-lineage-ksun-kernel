@@ -63,13 +63,19 @@ if [[ -f "scripts/kconfig/merge_config.sh" && -f "arch/arm64/configs/vendor/oplu
     2>&1
 fi
 
-echo "Configuring module compatibility (MODVERSIONS, disable LOCALVERSION_AUTO)"
-sed -i '/CONFIG_MODVERSIONS/d; /CONFIG_MODULE_SIG_FORCE/d; /CONFIG_MODULE_FORCE_LOAD/d; /CONFIG_LOCALVERSION_AUTO/d' out/.config
+echo "Configuring module compatibility (MODVERSIONS + matching LOCALVERSION)"
+KERNEL_GIT_VERSION=$(git describe --always --dirty 2>/dev/null | sed 's/.*-g/g/' | sed 's/-dirty//' || echo "")
+if [[ -n "$KERNEL_GIT_VERSION" ]]; then
+  echo "Setting LOCALVERSION to -${KERNEL_GIT_VERSION} to match vendor modules"
+fi
+sed -i '/CONFIG_MODVERSIONS/d; /CONFIG_MODULE_SIG_FORCE/d; /CONFIG_LOCALVERSION_AUTO/d; /CONFIG_LOCALVERSION=/d' out/.config
 {
   echo "CONFIG_MODVERSIONS=y"
-  echo "# CONFIG_MODULE_FORCE_LOAD is not set"
   echo "# CONFIG_MODULE_SIG_FORCE is not set"
   echo "# CONFIG_LOCALVERSION_AUTO is not set"
+  if [[ -n "$KERNEL_GIT_VERSION" ]]; then
+    echo "CONFIG_LOCALVERSION=\"-${KERNEL_GIT_VERSION}\""
+  fi
 } >> out/.config
 
 if [[ -d "drivers/kernelsu" || -d "KernelSU-Next" ]]; then
