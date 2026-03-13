@@ -29,3 +29,11 @@ sed -i "s#__IMAGE_NAME__#${escaped_image_name}#" AnyKernel3/anykernel.sh
 if [[ -f AnyKernel3/README.md ]]; then
   printf '\nBuilt by workflow: %s\n' "$RELEASE_LABEL" >> AnyKernel3/README.md
 fi
+
+# Copy WLAN module if it was built
+WLAN_MODULE="kernel/out/modules/qca_cld3_wlan.ko"
+if [[ -f "$WLAN_MODULE" ]]; then
+  echo "Copying WLAN module to AnyKernel3"
+  mkdir -p AnyKernel3/modules/vendor_dlkm/lib/modules
+  cp -f "$WLAN_MODULE" AnyKernel3/modules/vendor_dlkm/lib/modules/
+fi

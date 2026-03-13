@@ -12,7 +12,7 @@ Weekly AnyKernel3 build for **OnePlus 7T Pro (`hotdog`)** using the matching **L
 - extracts build metadata from the kernel tree (`build.config`, `defconfig`, clang revision, image name)
 - downloads matching AOSP clang/GCC prebuilts
 - integrates KernelSU-Next and records its version + SHA in release notes
-- builds the legacy make-based kernel (merging `vendor/oplus.config`) and packages an **AnyKernel3 ZIP**
+- builds the legacy make-based kernel (merging `vendor/oplus.config`) with **WLAN module** and packages an **AnyKernel3 ZIP**
 - uploads artifacts (ZIP + raw kernel image) and creates a **GitHub Release**
 
 ## Release policy
@@ -50,4 +50,5 @@ Tag format:
 ## Notes
 
 - This repo intentionally ships **AnyKernel3 ZIPs**, not raw `boot.img`.
+- The ZIP includes a custom-built **WLAN module** (`qca_cld3_wlan.ko`) for WiFi compatibility.
 - If the kernel tree migrates to **Kleaf/Bazel**, the workflow exits with a clear error.

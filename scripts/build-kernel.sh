@@ -63,19 +63,11 @@ if [[ -f "scripts/kconfig/merge_config.sh" && -f "arch/arm64/configs/vendor/oplu
     2>&1
 fi
 
-echo "Configuring module compatibility (MODVERSIONS + matching LOCALVERSION)"
-KERNEL_GIT_VERSION=$(git describe --always --dirty 2>/dev/null | sed 's/.*-g/g/' | sed 's/-dirty//' || echo "")
-if [[ -n "$KERNEL_GIT_VERSION" ]]; then
-  echo "Setting LOCALVERSION to -${KERNEL_GIT_VERSION} to match vendor modules"
-fi
-sed -i '/CONFIG_MODVERSIONS/d; /CONFIG_MODULE_SIG_FORCE/d; /CONFIG_LOCALVERSION_AUTO/d; /CONFIG_LOCALVERSION=/d' out/.config
+echo "Configuring module options"
+sed -i '/CONFIG_MODVERSIONS/d; /CONFIG_MODULE_SIG_FORCE/d' out/.config
 {
   echo "CONFIG_MODVERSIONS=y"
   echo "# CONFIG_MODULE_SIG_FORCE is not set"
-  echo "# CONFIG_LOCALVERSION_AUTO is not set"
-  if [[ -n "$KERNEL_GIT_VERSION" ]]; then
-    echo "CONFIG_LOCALVERSION=\"-${KERNEL_GIT_VERSION}\""
-  fi
 } >> out/.config
 
 if [[ -d "drivers/kernelsu" || -d "KernelSU-Next" ]]; then
@@ -112,3 +104,37 @@ make -j"$(nproc)" O=out ARCH=arm64 \
   DTC_FLAGS="-@" \
   DTC_CPP_FLAGS="-DSPMI_USID=0x0" \
   2>&1
+
+# Build WLAN module if techpack/wlan exists
+if [[ -d "techpack/wlan/qcacld-3.0" ]]; then
+  echo "=== Building WLAN module (qcacld-3.0) ==="
+  WLAN_ROOT="$(pwd)/techpack/wlan/qcacld-3.0"
+  WLAN_CMN="$(pwd)/techpack/wlan/qca-wifi-host-cmn"
+  FW_API="$(pwd)/techpack/wlan/fw-api"
+  KERNEL_SRC="$(pwd)"
+  KERNEL_OUT="$(pwd)/out"
+
+  make -j"$(nproc)" -C "$KERNEL_SRC" O="$KERNEL_OUT" M="$WLAN_ROOT" \
+    ARCH=arm64 \
+    CC="ccache clang" LLVM=1 LLVM_IAS=1 \
+    CROSS_COMPILE=aarch64-linux-gnu- \
+    WLAN_ROOT="$WLAN_ROOT" \
+    WLAN_COMMON_ROOT="$WLAN_CMN" \
+    WLAN_COMMON_INC="$WLAN_CMN" \
+    WLAN_FW_INC="$FW_API/fw" \
+    CONFIG_QCA_CLD_WLAN=m \
+    CONFIG_CNSS2=y \
+    CONFIG_CNSS2_QMI=y \
+    MODNAME=wlan \
+    WLAN_CTRL_NAME=wlan \
+    2>&1 || echo "Warning: WLAN module build failed (non-fatal)"
+
+  if [[ -f "$WLAN_ROOT/wlan.ko" ]]; then
+    echo "WLAN module built successfully: $WLAN_ROOT/wlan.ko"
+    mkdir -p out/modules
+    cp "$WLAN_ROOT/wlan.ko" out/modules/qca_cld3_wlan.ko
+  else
+    echo "Warning: WLAN module not found after build"
+  fi
+  echo "==========================================="
+fi

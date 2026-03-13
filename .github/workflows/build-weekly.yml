@@ -159,6 +159,22 @@ jobs:
         run: |
           scripts/detect-ksun-version.sh kernel "$GITHUB_OUTPUT"
 
+      - name: Clone WLAN driver (qcacld-3.0)
+        run: |
+          mkdir -p kernel/techpack/wlan
+          scripts/retry-helper.sh git clone --depth=1 \
+            "https://github.com/oneplus-12-development/vendor_qcom_opensource_wlan_qcacld-3.0.git" \
+            -b lineage-21 \
+            kernel/techpack/wlan/qcacld-3.0
+          scripts/retry-helper.sh git clone --depth=1 \
+            "https://github.com/oneplus-12-development/vendor_qcom_opensource_wlan_qca-wifi-host-cmn.git" \
+            -b lineage-21 \
+            kernel/techpack/wlan/qca-wifi-host-cmn
+          scripts/retry-helper.sh git clone --depth=1 \
+            "https://github.com/oneplus-12-development/vendor_qcom_opensource_wlan_fw-api.git" \
+            -b lineage-21 \
+            kernel/techpack/wlan/fw-api
+
       - name: Restore ccache
         uses: actions/cache@v4
         with:
