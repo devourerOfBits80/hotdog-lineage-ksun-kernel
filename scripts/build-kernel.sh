@@ -105,12 +105,12 @@ make -j"$(nproc)" O=out ARCH=arm64 \
   DTC_CPP_FLAGS="-DSPMI_USID=0x0" \
   2>&1
 
-# Build WLAN module if techpack/wlan exists
-if [[ -d "techpack/wlan/qcacld-3.0" ]]; then
+# Build WLAN module if external/wlan exists
+if [[ -d "external/wlan/qcacld-3.0" ]]; then
   echo "=== Building WLAN module (qcacld-3.0) ==="
-  WLAN_ROOT="$(pwd)/techpack/wlan/qcacld-3.0"
-  WLAN_CMN="$(pwd)/techpack/wlan/qca-wifi-host-cmn"
-  FW_API="$(pwd)/techpack/wlan/fw-api"
+  WLAN_ROOT="$(pwd)/external/wlan/qcacld-3.0"
+  WLAN_CMN="$(pwd)/external/wlan/qca-wifi-host-cmn"
+  FW_API="$(pwd)/external/wlan/fw-api"
   KERNEL_SRC="$(pwd)"
   KERNEL_OUT="$(pwd)/out"
 
