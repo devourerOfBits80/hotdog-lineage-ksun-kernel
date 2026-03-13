@@ -63,6 +63,14 @@ if [[ -f "scripts/kconfig/merge_config.sh" && -f "arch/arm64/configs/vendor/oplu
     2>&1
 fi
 
+echo "Disabling module versioning and signature checks for vendor module compatibility"
+sed -i '/CONFIG_MODVERSIONS/d; /CONFIG_MODULE_SIG/d; /CONFIG_MODULE_SIG_FORCE/d' out/.config
+{
+  echo "# CONFIG_MODVERSIONS is not set"
+  echo "# CONFIG_MODULE_SIG is not set"
+  echo "# CONFIG_MODULE_SIG_FORCE is not set"
+} >> out/.config
+
 if [[ -d "drivers/kernelsu" || -d "KernelSU-Next" ]]; then
   echo "Enabling KernelSU-Next config options"
   sed -i '/CONFIG_KPROBES/d; /CONFIG_KPROBE_EVENTS/d; /CONFIG_KSU/d' out/.config
@@ -74,7 +82,8 @@ if [[ -d "drivers/kernelsu" || -d "KernelSU-Next" ]]; then
 fi
 make O=out ARCH=arm64 olddefconfig 2>&1
 
-echo "=== KernelSU-Next config status ==="
+echo "=== Kernel config status ==="
+grep -E "CONFIG_MODVERSIONS|CONFIG_MODULE_SIG" out/.config || true
 grep -E "CONFIG_KSU|CONFIG_KPROBES|CONFIG_KRETPROBES" out/.config || true
 if grep -q "CONFIG_KSU=y" out/.config; then
   echo "CONFIG_KSU=y is set - KernelSU-Next will be built into kernel"
