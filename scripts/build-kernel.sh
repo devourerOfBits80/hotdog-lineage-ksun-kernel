@@ -61,10 +61,33 @@ if [[ -f "scripts/kconfig/merge_config.sh" && -f "arch/arm64/configs/vendor/oplu
   echo "Merging oplus config fragment into defconfig"
   scripts/kconfig/merge_config.sh -m -O out out/.config arch/arm64/configs/vendor/oplus.config \
     2>&1
-  make O=out ARCH=arm64 olddefconfig 2>&1
-else
-  echo "No oplus config fragment merge performed"
 fi
+
+if [[ -d "drivers/kernelsu" || -d "KernelSU-Next" ]]; then
+  echo "Enabling KernelSU-Next config options"
+  sed -i '/CONFIG_KPROBES/d; /CONFIG_KPROBE_EVENTS/d; /CONFIG_KSU/d' out/.config
+  {
+    echo "CONFIG_KPROBES=y"
+    echo "CONFIG_KPROBE_EVENTS=y"
+    echo "CONFIG_KSU=y"
+  } >> out/.config
+fi
+make O=out ARCH=arm64 olddefconfig 2>&1
+
+echo "=== KernelSU-Next config status ==="
+grep -E "CONFIG_KSU|CONFIG_KPROBES|CONFIG_KRETPROBES" out/.config || true
+if grep -q "CONFIG_KSU=y" out/.config; then
+  echo "CONFIG_KSU=y is set - KernelSU-Next will be built into kernel"
+  if grep -q "CONFIG_KPROBES=y" out/.config; then
+    echo "CONFIG_KPROBES=y - using kprobe hooks"
+  else
+    echo "Warning: CONFIG_KPROBES not enabled - manual hooks may be required"
+  fi
+else
+  echo "ERROR: CONFIG_KSU is not enabled - KernelSU-Next will NOT work"
+  exit 1
+fi
+echo "==================================="
 
 make -j"$(nproc)" O=out ARCH=arm64 \
   CC="ccache clang" LLVM=1 LLVM_IAS=1 \
