@@ -105,36 +105,13 @@ make -j"$(nproc)" O=out ARCH=arm64 \
   DTC_CPP_FLAGS="-DSPMI_USID=0x0" \
   2>&1
 
-# Build WLAN module if external/wlan exists
-if [[ -d "external/wlan/qcacld-3.0" ]]; then
-  echo "=== Building WLAN module (qcacld-3.0) ==="
-  WLAN_ROOT="$(pwd)/external/wlan/qcacld-3.0"
-  WLAN_CMN="$(pwd)/external/wlan/qca-wifi-host-cmn"
-  FW_API="$(pwd)/external/wlan/fw-api"
-  KERNEL_SRC="$(pwd)"
-  KERNEL_OUT="$(pwd)/out"
-
-  make -j"$(nproc)" -C "$KERNEL_SRC" O="$KERNEL_OUT" M="$WLAN_ROOT" \
-    ARCH=arm64 \
-    CC="ccache clang" LLVM=1 LLVM_IAS=1 \
-    CROSS_COMPILE=aarch64-linux-gnu- \
-    WLAN_ROOT="$WLAN_ROOT" \
-    WLAN_COMMON_ROOT="$WLAN_CMN" \
-    WLAN_COMMON_INC="$WLAN_CMN" \
-    WLAN_FW_INC="$FW_API/fw" \
-    CONFIG_QCA_CLD_WLAN=m \
-    CONFIG_CNSS2=y \
-    CONFIG_CNSS2_QMI=y \
-    MODNAME=wlan \
-    WLAN_CTRL_NAME=wlan \
-    2>&1 || echo "Warning: WLAN module build failed (non-fatal)"
-
-  if [[ -f "$WLAN_ROOT/wlan.ko" ]]; then
-    echo "WLAN module built successfully: $WLAN_ROOT/wlan.ko"
-    mkdir -p out/modules
-    cp "$WLAN_ROOT/wlan.ko" out/modules/qca_cld3_wlan.ko
-  else
-    echo "Warning: WLAN module not found after build"
-  fi
-  echo "==========================================="
+# Copy WLAN module built by kernel (from drivers/staging/qcacld-3.0)
+WLAN_KO="out/drivers/staging/qcacld-3.0/wlan.ko"
+if [[ -f "$WLAN_KO" ]]; then
+  echo "=== Copying WLAN module ==="
+  mkdir -p out/modules
+  cp "$WLAN_KO" out/modules/qca_cld3_wlan.ko
+  echo "WLAN module: $WLAN_KO -> out/modules/qca_cld3_wlan.ko"
+else
+  echo "Warning: WLAN module not found at $WLAN_KO"
 fi

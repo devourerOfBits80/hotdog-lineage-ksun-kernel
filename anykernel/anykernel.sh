@@ -38,7 +38,8 @@ flash_boot
 # Install WLAN module if present
 if [ -f "modules/vendor_dlkm/lib/modules/qca_cld3_wlan.ko" ]; then
   ui_print "Installing WLAN module..."
-  mount /vendor_dlkm 2>/dev/null || mount -o rw,remount /vendor_dlkm 2>/dev/null || true
+  mount /vendor_dlkm 2>/dev/null || true
+  mount -o rw,remount /vendor_dlkm 2>/dev/null || true
   if [ -d "/vendor_dlkm/lib/modules" ]; then
     cp -f modules/vendor_dlkm/lib/modules/qca_cld3_wlan.ko /vendor_dlkm/lib/modules/
     chmod 644 /vendor_dlkm/lib/modules/qca_cld3_wlan.ko
