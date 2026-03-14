@@ -1,6 +1,6 @@
-id=wlan_module_fix
-name=WLAN Module for KernelSU-Next Kernel
+id=wlan_hotdog
+name=WLAN Driver for OnePlus 7T Pro
 version=1.0
 versionCode=1
 author=GitHub Actions
-description=Replaces stock WLAN module with kernel-compatible version
+description=Loads compatible WLAN driver for OnePlus 7T Pro (hotdog) at boot

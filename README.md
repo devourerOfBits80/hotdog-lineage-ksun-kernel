@@ -53,18 +53,17 @@ Tag format:
 
 1. **Flash AnyKernel3 ZIP** via recovery
 2. **Reboot** — KernelSU-Next will be active (WiFi not yet working)
-3. **Install meta-overlayfs** (required for module overlay):
-   - Download from [meta-overlayfs](https://github.com/KernelSU-Modules-Repo/meta-overlayfs/releases)
-   - Install via KernelSU Manager or `ksud module install`
-4. **Install WLAN module** via KernelSU Manager or:
+3. **Install WLAN module** via KernelSU Manager or:
    ```bash
    adb push WLAN-Module-*.zip /sdcard/
    adb shell su -c "ksud module install /sdcard/WLAN-Module-*.zip"
    ```
-5. **Reboot** — WiFi should work
+4. **Reboot** — WiFi should work
+
+The WLAN module uses `insmod` to load the kernel-compatible driver at boot.
 
 ## Notes
 
 - This repo ships **AnyKernel3 ZIPs**, not raw `boot.img`.
-- A separate **WLAN module ZIP** is required for WiFi (KernelSU overlay on `/vendor`).
+- A separate **WLAN module ZIP** is required for WiFi.
 - If the kernel tree migrates to **Kleaf/Bazel**, the workflow exits with a clear error.
