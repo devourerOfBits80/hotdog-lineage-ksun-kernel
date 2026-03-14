@@ -1,0 +1,6 @@
+id=wlan_module_fix
+name=WLAN Module for KernelSU-Next Kernel
+version=1.0
+versionCode=1
+author=GitHub Actions
+description=Replaces stock WLAN module with kernel-compatible version

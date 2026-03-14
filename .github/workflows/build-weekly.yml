@@ -221,6 +221,19 @@ jobs:
         run: |
           scripts/prepare-anykernel.sh
 
+      - name: Create KernelSU WLAN module
+        run: |
+          WLAN_KO="kernel/out/modules/qca_cld3_wlan.ko"
+          if [[ -f "$WLAN_KO" ]]; then
+            cp "$WLAN_KO" ksun-wlan-module/system/vendor/lib/modules/qca_cld3_wlan.ko
+            rm -f ksun-wlan-module/system/vendor/lib/modules/.gitkeep
+            cd ksun-wlan-module
+            zip -r "${GITHUB_WORKSPACE}/WLAN-Module-${{ needs.detect.outputs.branch }}-${{ needs.detect.outputs.build_date }}.zip" .
+            echo "KernelSU WLAN module created"
+          else
+            echo "Warning: WLAN module not found at $WLAN_KO"
+          fi
+
       - name: Create archive
         run: |
           cd AnyKernel3
@@ -241,6 +254,14 @@ jobs:
           path: kernel/${{ steps.image.outputs.image_relpath }}
           if-no-files-found: error
 
+      - name: Upload KernelSU WLAN module artifact
+        uses: actions/upload-artifact@v4
+        if: hashFiles('WLAN-Module-*.zip') != ''
+        with:
+          name: WLAN-Module-${{ needs.detect.outputs.branch }}-${{ needs.detect.outputs.build_date }}
+          path: WLAN-Module-*.zip
+          if-no-files-found: warn
+
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -259,9 +280,20 @@ jobs:
           - Clang revision: ${{ steps.cfg.outputs.clang_revision }}
           - KernelSU-Next version: ${{ steps.ksun_version.outputs.version }}
           - KernelSU-Next: ${{ steps.ksun.outputs.ksun_sha }}
+
+          ## Installation
+          1. Flash AnyKernel3 ZIP via recovery
+          2. Reboot, install [meta-overlayfs](https://github.com/KernelSU-Modules-Repo/meta-overlayfs/releases) (via KernelSU Manager or \`ksud module install\`)
+          3. Install WLAN-Module ZIP (via KernelSU Manager or \`ksud module install\`)
+          4. Reboot for WiFi
           EOF
           sed -i 's/^          //' "$NOTES_FILE"
+          WLAN_ZIP="WLAN-Module-${{ needs.detect.outputs.branch }}-${{ needs.detect.outputs.build_date }}.zip"
+          ASSETS=("${{ needs.detect.outputs.asset_name }}")
+          if [[ -f "$WLAN_ZIP" ]]; then
+            ASSETS+=("$WLAN_ZIP")
+          fi
           gh release create "${{ needs.detect.outputs.release_tag }}" \
-            "${{ needs.detect.outputs.asset_name }}" \
+            "${ASSETS[@]}" \
             --title "${{ needs.detect.outputs.release_name }}" \
             --notes-file "$NOTES_FILE"

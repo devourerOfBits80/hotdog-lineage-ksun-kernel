@@ -13,8 +13,7 @@ Weekly AnyKernel3 build for **OnePlus 7T Pro (`hotdog`)** using the matching **L
 - downloads matching AOSP clang/GCC prebuilts
 - integrates KernelSU-Next and records its version + SHA in release notes
 - builds the legacy make-based kernel (merging `vendor/oplus.config`) and packages an **AnyKernel3 ZIP**
-- includes WLAN module as **systemless ak3-helper** for KernelSU (automatic overlay)
-- uploads artifacts (ZIP + raw kernel image) and creates a **GitHub Release**
+- builds a separate **KernelSU WLAN module** ZIP for WiFi support
 
 ## Release policy
 
@@ -31,7 +30,9 @@ Tag format:
 ## Release naming
 
 - title: `OnePlus 7T Pro AnyKernel3 | lineage-XX.Y | YYYY-MM-DD`
-- asset: `AnyKernel3-hotdog-lineage-XX.Y-YYYY-MM-DD.zip`
+- assets:
+  - `AnyKernel3-hotdog-lineage-XX.Y-YYYY-MM-DD.zip` (kernel)
+  - `WLAN-Module-lineage-XX.Y-YYYY-MM-DD.zip` (WiFi module)
 
 ## Layout
 
@@ -50,13 +51,20 @@ Tag format:
 
 ## Installation
 
-1. **Flash AnyKernel3 ZIP** via recovery (installs kernel + WLAN module)
-2. **Reboot** — WiFi should work automatically
-
-The ZIP uses AnyKernel3's **systemless module** feature (`do.systemless=1`) to create an `ak3-helper` KernelSU module that overlays the compatible WLAN driver without modifying read-only vendor partitions.
+1. **Flash AnyKernel3 ZIP** via recovery
+2. **Reboot** — KernelSU-Next will be active (WiFi not yet working)
+3. **Install meta-overlayfs** (required for module overlay):
+   - Download from [meta-overlayfs](https://github.com/KernelSU-Modules-Repo/meta-overlayfs/releases)
+   - Install via KernelSU Manager or `ksud module install`
+4. **Install WLAN module** via KernelSU Manager or:
+   ```bash
+   adb push WLAN-Module-*.zip /sdcard/
+   adb shell su -c "ksud module install /sdcard/WLAN-Module-*.zip"
+   ```
+5. **Reboot** — WiFi should work
 
 ## Notes
 
-- This repo intentionally ships **AnyKernel3 ZIPs**, not raw `boot.img`.
-- WLAN module is included as a systemless overlay.
+- This repo ships **AnyKernel3 ZIPs**, not raw `boot.img`.
+- A separate **WLAN module ZIP** is required for WiFi (KernelSU overlay on `/vendor`).
 - If the kernel tree migrates to **Kleaf/Bazel**, the workflow exits with a clear error.
