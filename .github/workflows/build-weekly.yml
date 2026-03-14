@@ -225,8 +225,8 @@ jobs:
         run: |
           WLAN_KO="kernel/out/modules/qca_cld3_wlan.ko"
           if [[ -f "$WLAN_KO" ]]; then
-            cp "$WLAN_KO" ksun-wlan-module/system/vendor/lib/modules/qca_cld3_wlan.ko
-            rm -f ksun-wlan-module/system/vendor/lib/modules/.gitkeep
+            cp "$WLAN_KO" ksun-wlan-module/vendor/lib/modules/qca_cld3_wlan.ko
+            rm -f ksun-wlan-module/vendor/lib/modules/.gitkeep
             cd ksun-wlan-module
             zip -r "${GITHUB_WORKSPACE}/WLAN-Module-${{ needs.detect.outputs.branch }}-${{ needs.detect.outputs.build_date }}.zip" .
             echo "KernelSU WLAN module created"
