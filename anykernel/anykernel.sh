@@ -1,6 +1,6 @@
 #!/sbin/sh
 properties() { 'kernel.string=KernelSU-Next for OnePlus 7T Pro (LineageOS)
-kernel.made=GitHub Actions
+kernel.made=devourerOfBits80
 kernel.compiler=Auto-detected AOSP prebuilts
 device.name1=hotdog
 device.name2=OnePlus7TPro

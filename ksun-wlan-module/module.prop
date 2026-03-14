@@ -2,5 +2,5 @@ id=wlan_hotdog
 name=WLAN Driver for OnePlus 7T Pro
 version=1.0
 versionCode=1
-author=GitHub Actions
+author=devourerOfBits80
 description=Loads compatible WLAN driver for OnePlus 7T Pro (hotdog) at boot
