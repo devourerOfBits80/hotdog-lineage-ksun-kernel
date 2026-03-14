@@ -64,10 +64,11 @@ if [[ -f "scripts/kconfig/merge_config.sh" && -f "arch/arm64/configs/vendor/oplu
 fi
 
 echo "Configuring module options"
-sed -i '/CONFIG_MODVERSIONS/d; /CONFIG_MODULE_SIG_FORCE/d' out/.config
+sed -i '/CONFIG_MODVERSIONS/d; /CONFIG_MODULE_SIG_FORCE/d; /CONFIG_MODULE_FORCE_LOAD/d' out/.config
 {
-  echo "CONFIG_MODVERSIONS=y"
+  echo "# CONFIG_MODVERSIONS is not set"
   echo "# CONFIG_MODULE_SIG_FORCE is not set"
+  echo "CONFIG_MODULE_FORCE_LOAD=y"
 } >> out/.config
 
 if [[ -d "drivers/kernelsu" || -d "KernelSU-Next" ]]; then
@@ -82,7 +83,7 @@ fi
 make O=out ARCH=arm64 olddefconfig 2>&1
 
 echo "=== Kernel config status ==="
-grep -E "CONFIG_MODVERSIONS|CONFIG_MODULE_SIG" out/.config | head -5 || true
+grep -E "CONFIG_MODVERSIONS|CONFIG_MODULE_SIG|CONFIG_MODULE_FORCE_LOAD" out/.config | head -5 || true
 grep -E "CONFIG_KSU|CONFIG_KPROBES|CONFIG_KRETPROBES" out/.config || true
 if grep -q "CONFIG_KSU=y" out/.config; then
   echo "CONFIG_KSU=y is set - KernelSU-Next will be built into kernel"
