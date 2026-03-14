@@ -12,7 +12,8 @@ Weekly AnyKernel3 build for **OnePlus 7T Pro (`hotdog`)** using the matching **L
 - extracts build metadata from the kernel tree (`build.config`, `defconfig`, clang revision, image name)
 - downloads matching AOSP clang/GCC prebuilts
 - integrates KernelSU-Next and records its version + SHA in release notes
-- builds the legacy make-based kernel (merging `vendor/oplus.config`) with **WLAN module** and packages an **AnyKernel3 ZIP**
+- builds the legacy make-based kernel (merging `vendor/oplus.config`) and packages an **AnyKernel3 ZIP**
+- includes WLAN module as **systemless ak3-helper** for KernelSU (automatic overlay)
 - uploads artifacts (ZIP + raw kernel image) and creates a **GitHub Release**
 
 ## Release policy
@@ -47,8 +48,15 @@ Tag format:
 - `scripts/prepare-anykernel.sh` — AnyKernel3 staging (dynamic image name)
 - `anykernel/anykernel.sh` — AnyKernel3 installer for **hotdog** (OnePlus 7T Pro)
 
+## Installation
+
+1. **Flash AnyKernel3 ZIP** via recovery (installs kernel + WLAN module)
+2. **Reboot** — WiFi should work automatically
+
+The ZIP uses AnyKernel3's **systemless module** feature (`do.systemless=1`) to create an `ak3-helper` KernelSU module that overlays the compatible WLAN driver without modifying read-only vendor partitions.
+
 ## Notes
 
 - This repo intentionally ships **AnyKernel3 ZIPs**, not raw `boot.img`.
-- The ZIP includes a custom-built **WLAN module** (`qca_cld3_wlan.ko`) for WiFi compatibility.
+- WLAN module is included as a systemless overlay.
 - If the kernel tree migrates to **Kleaf/Bazel**, the workflow exits with a clear error.

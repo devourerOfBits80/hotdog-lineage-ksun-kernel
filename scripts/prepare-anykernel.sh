@@ -2,7 +2,6 @@
 set -euo pipefail
 
 : "${IMAGE_PATH:?missing IMAGE_PATH}"
-: "${RELEASE_LABEL:?missing RELEASE_LABEL}"
 
 if [[ ! -f "$IMAGE_PATH" ]]; then
   echo "Missing kernel image at $IMAGE_PATH" >&2
@@ -26,14 +25,12 @@ cp -f "$IMAGE_PATH" "AnyKernel3/${IMAGE_NAME}"
 escaped_image_name="$(printf '%s' "$IMAGE_NAME" | sed -e 's/[\\/&]/\\&/g')"
 sed -i "s#__IMAGE_NAME__#${escaped_image_name}#" AnyKernel3/anykernel.sh
 
-if [[ -f AnyKernel3/README.md ]]; then
-  printf '\nBuilt by workflow: %s\n' "$RELEASE_LABEL" >> AnyKernel3/README.md
-fi
-
-# Copy WLAN module if it was built
+# Copy WLAN module for systemless installation via AnyKernel3
 WLAN_MODULE="kernel/out/modules/qca_cld3_wlan.ko"
 if [[ -f "$WLAN_MODULE" ]]; then
-  echo "Copying WLAN module to AnyKernel3"
-  mkdir -p AnyKernel3/modules/vendor_dlkm/lib/modules
-  cp -f "$WLAN_MODULE" AnyKernel3/modules/vendor_dlkm/lib/modules/
+  echo "Copying WLAN module for systemless install"
+  mkdir -p AnyKernel3/modules/vendor/lib/modules
+  cp -f "$WLAN_MODULE" AnyKernel3/modules/vendor/lib/modules/qca_cld3_wlan.ko
+else
+  echo "Warning: WLAN module not found at $WLAN_MODULE"
 fi

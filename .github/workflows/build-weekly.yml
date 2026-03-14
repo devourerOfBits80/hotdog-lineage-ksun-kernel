@@ -217,7 +217,6 @@ jobs:
 
       - name: Prepare AnyKernel3 package
         env:
-          RELEASE_LABEL: "${{ needs.detect.outputs.branch }} | ${{ needs.detect.outputs.build_date }}"
           IMAGE_PATH: "kernel/${{ steps.image.outputs.image_relpath }}"
         run: |
           scripts/prepare-anykernel.sh
