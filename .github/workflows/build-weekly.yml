@@ -161,7 +161,16 @@ jobs:
           cp -r "$GITHUB_WORKSPACE/susfs4ksu/kernel_patches/fs/"* fs/
           mkdir -p include/linux
           cp -r "$GITHUB_WORKSPACE/susfs4ksu/kernel_patches/include/linux/"* include/linux/
-          patch -p1 -i "$GITHUB_WORKSPACE/susfs4ksu/kernel_patches/50_add_susfs_in_kernel-4.14.patch"
+          patch -p1 -i "$GITHUB_WORKSPACE/susfs4ksu/kernel_patches/50_add_susfs_in_kernel-4.14.patch" --forward || true
+          if [[ -f fs/proc/task_mmu.c.rej ]]; then
+            "${GITHUB_WORKSPACE}/scripts/fix-susfs-task_mmu.sh" fs/proc/task_mmu.c
+            rm -f fs/proc/task_mmu.c.rej
+          fi
+          if find . -name "*.rej" -print -quit | grep -q .; then
+            echo "Unresolved patch rejects:"
+            find . -name "*.rej"
+            exit 1
+          fi
           echo "SUSFS kernel patches applied"
 
       - name: Detect KernelSU-Next version
