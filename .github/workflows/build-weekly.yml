@@ -228,6 +228,7 @@ jobs:
             cp "$WLAN_KO" ksun-wlan-module/wlan.ko
             chmod 644 ksun-wlan-module/wlan.ko
             chmod 755 ksun-wlan-module/service.sh
+            chmod 755 ksun-wlan-module/uninstall.sh
             cd ksun-wlan-module
             zip -r "${GITHUB_WORKSPACE}/WLAN-Module-${{ needs.detect.outputs.branch }}-${{ needs.detect.outputs.build_date }}.zip" .
             echo "KernelSU WLAN module created"
