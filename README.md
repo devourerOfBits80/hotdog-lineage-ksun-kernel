@@ -11,7 +11,7 @@ Weekly AnyKernel3 build for **OnePlus 7T Pro (`hotdog`)** using the matching **L
 - resolves upstream SHAs for that branch and **skips build only if a release for the current state already exists** (same branch + device SHA + kernel SHA + KernelSU-Next tag)
 - extracts build metadata from the kernel tree (`build.config`, `defconfig`, clang revision, image name)
 - downloads matching AOSP clang/GCC prebuilts
-- integrates KernelSU-Next and records its version + SHA in release notes
+- integrates **KernelSU-Next** (legacy_susfs branch) and **SUSFS** kernel patches (4.14)
 - builds the legacy make-based kernel (merging `vendor/oplus.config`) and packages an **AnyKernel3 ZIP**
 - builds a separate **KernelSU WLAN module** ZIP for WiFi support
 
@@ -25,7 +25,7 @@ A release is created only when the release tag would be new — i.e. the upstrea
 
 Tag format:
 
-`lineage-XX.Y-<device_sha12>-<kernel_sha12>-<ksun_tag>`
+`lineage-XX.Y-<device_sha12>-<kernel_sha12>-<ksun_tag>-susfs`
 
 ## Release naming
 
@@ -62,8 +62,11 @@ Tag format:
 
 The WLAN module uses `insmod` to load the kernel-compatible driver at boot.
 
+**SUSFS (root hiding):** The kernel includes SUSFS support. Install the [susfs4ksu module](https://github.com/sidex15/susfs4ksu-module/releases) via KernelSU Manager for root-hiding features.
+
 ## Notes
 
 - This repo ships **AnyKernel3 ZIPs**, not raw `boot.img`.
-- A separate **WLAN module ZIP** is required for WiFi.
+- Kernel includes **KernelSU-Next** (legacy_susfs) and **SUSFS**; optional susfs4ksu module for root hiding (see Installation).
+- A separate **WLAN module ZIP** is required for WiFi (loaded via `insmod` at boot).
 - If the kernel tree migrates to **Kleaf/Bazel**, the workflow exits with a clear error.

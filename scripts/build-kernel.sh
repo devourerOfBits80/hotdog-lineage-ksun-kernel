@@ -72,19 +72,21 @@ sed -i '/CONFIG_MODVERSIONS/d; /CONFIG_MODULE_SIG_FORCE/d; /CONFIG_MODULE_FORCE_
 } >> out/.config
 
 if [[ -d "drivers/kernelsu" || -d "KernelSU-Next" ]]; then
-  echo "Enabling KernelSU-Next config options"
+  echo "Enabling KernelSU-Next and SUSFS config options"
   sed -i '/CONFIG_KPROBES/d; /CONFIG_KPROBE_EVENTS/d; /CONFIG_KSU/d' out/.config
   {
     echo "CONFIG_KPROBES=y"
     echo "CONFIG_KPROBE_EVENTS=y"
     echo "CONFIG_KSU=y"
+    echo "CONFIG_KSU_SUSFS=y"
+    echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y"
   } >> out/.config
 fi
 make O=out ARCH=arm64 olddefconfig 2>&1
 
 echo "=== Kernel config status ==="
 grep -E "CONFIG_MODVERSIONS|CONFIG_MODULE_SIG|CONFIG_MODULE_FORCE_LOAD" out/.config | head -5 || true
-grep -E "CONFIG_KSU|CONFIG_KPROBES|CONFIG_KRETPROBES" out/.config || true
+grep -E "CONFIG_KPROBES|CONFIG_KRETPROBES|CONFIG_KSU|CONFIG_KSU_SUSFS" out/.config || true
 if grep -q "CONFIG_KSU=y" out/.config; then
   echo "CONFIG_KSU=y is set - KernelSU-Next will be built into kernel"
   if grep -q "CONFIG_KPROBES=y" out/.config; then

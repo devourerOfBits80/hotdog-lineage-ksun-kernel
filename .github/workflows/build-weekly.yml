@@ -72,7 +72,7 @@ jobs:
         id: meta
         run: |
           BUILD_DATE="$(date -u +%F)"
-          RELEASE_TAG="${{ steps.detect.outputs.branch }}-${{ steps.detect.outputs.device_short }}-${{ steps.detect.outputs.kernel_short }}-${{ steps.ksun_tag.outputs.tag }}"
+          RELEASE_TAG="${{ steps.detect.outputs.branch }}-${{ steps.detect.outputs.device_short }}-${{ steps.detect.outputs.kernel_short }}-${{ steps.ksun_tag.outputs.tag }}-susfs"
           RELEASE_NAME="OnePlus 7T Pro AnyKernel3 | ${{ steps.detect.outputs.branch }} | ${BUILD_DATE}"
           ASSET_NAME="AnyKernel3-hotdog-${{ steps.detect.outputs.branch }}-${BUILD_DATE}.zip"
           {
@@ -146,13 +146,23 @@ jobs:
         run: |
           scripts/detect-clang-version.sh "$BRANCH" "$GITHUB_OUTPUT"
 
-      - name: Integrate KernelSU-Next
+      - name: Integrate KernelSU-Next (legacy_susfs)
         id: ksun
         working-directory: kernel
         run: |
-          "${GITHUB_WORKSPACE}/scripts/retry-helper.sh" bash -c "curl -LSs \"$KSUN_SETUP_URL\" | bash -s legacy"
+          "${GITHUB_WORKSPACE}/scripts/retry-helper.sh" bash -c "curl -LSs \"$KSUN_SETUP_URL\" | bash -s legacy_susfs"
           KSUN_SHA="$(git -C "$PWD" rev-parse --short HEAD)"
           echo "ksun_sha=${KSUN_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Integrate SUSFS kernel patches (4.14)
+        working-directory: kernel
+        run: |
+          git clone --depth=1 --branch kernel-4.14 "https://gitlab.com/simonpunk/susfs4ksu.git" "$GITHUB_WORKSPACE/susfs4ksu"
+          cp -r "$GITHUB_WORKSPACE/susfs4ksu/kernel_patches/fs/"* fs/
+          mkdir -p include/linux
+          cp -r "$GITHUB_WORKSPACE/susfs4ksu/kernel_patches/include/linux/"* include/linux/
+          patch -p1 -i "$GITHUB_WORKSPACE/susfs4ksu/kernel_patches/50_add_susfs_in_kernel-4.14.patch"
+          echo "SUSFS kernel patches applied"
 
       - name: Detect KernelSU-Next version
         id: ksun_version
@@ -163,10 +173,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .ccache
-          key: ${{ runner.os }}-ccache-${{ needs.detect.outputs.branch }}-${{ steps.cfg.outputs.clang_revision }}-${{ needs.detect.outputs.kernel_sha }}
+          key: ${{ runner.os }}-ccache-susfs-${{ needs.detect.outputs.branch }}-${{ steps.cfg.outputs.clang_revision }}-${{ needs.detect.outputs.kernel_sha }}
           restore-keys: |
-            ${{ runner.os }}-ccache-${{ needs.detect.outputs.branch }}-${{ steps.cfg.outputs.clang_revision }}-
-            ${{ runner.os }}-ccache-${{ needs.detect.outputs.branch }}-
+            ${{ runner.os }}-ccache-susfs-${{ needs.detect.outputs.branch }}-${{ steps.cfg.outputs.clang_revision }}-
+            ${{ runner.os }}-ccache-susfs-${{ needs.detect.outputs.branch }}-
 
       - name: Download detected clang prebuilt
         env:
